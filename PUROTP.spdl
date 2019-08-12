@@ -1,0 +1,106 @@
+/* 
+ * RFID ownership transfer protocol---PUROTP
+ */
+const xor:Function;
+const con:Function;
+const rot:Function;
+const puf:Function;
+usertype String;
+const OTRequest: String;
+
+secret ids;
+secret krnew;
+secret krcurrent;
+secret r1;
+secret r2;
+secret r3;
+secret r4;
+
+macro r2=puf(xor(krcurrent,r1));
+macro r4=puf(xor(krnew,r3));
+macro A=xor(rot(r1,ids),krcurrent);
+macro B=xor(rot(krcurrent,r1),ids);
+macro C=xor(rot(r2,ids),krcurrent);
+macro D=xor(rot(krcurrent,r2),r1);
+macro E=xor(rot(r3,ids),krcurrent);
+macro F=xor(rot(krcurrent,r3),r2);
+macro M1=xor(krnew,rot(ids,r3));
+macro M2=xor(rot(krnew,r3),ids);
+macro M3=xor(rot(r3,krnew),ids);
+macro M4=xor(rot(krcurrent,r4),r3);
+macro M5=rot(krnew,xor(r4,r3));
+
+protocol purotp(Rcurrent,Rnew,T){
+	role Rcurrent{
+		secret ids;
+		secret krcurrent;
+		secret r1;
+		secret r2;
+		secret r3;
+		fresh r1;
+		fresh r3;
+
+		send_1(Rcurrent,T,OTRequest);
+		recv_2(T,Rcurrent,ids);
+		send_3(Rcurrent,T,con(A,B));
+		recv_4(T,Rcurrent,con(C,D));
+		send_5(Rcurrent,T,con(E,F));
+
+		claim(Rcurrent,Secret,krcurrent);
+		claim(Rcurrent,Secret,r1);
+		claim(Rcurrent,Secret,r3);
+		claim(Rcurrent,Niagree);
+		claim(Rcurrent,Nisynch);
+		claim(Rcurrent,Alive);
+		claim(Rcurrent,Weakagree);
+	       }
+
+	role Rnew{
+		secret ids;
+		secret krcurrent;
+		secret r1;
+		secret r2;
+		secret r3;
+		secret r4;
+		fresh r3;
+
+		send_6(Rnew,T,con(M1,M2));
+		recv_7(T,Rnew,con(M3,M4));
+		send_8(Rnew,T,M5);
+
+		claim(Rnew,Secret,krnew);
+		claim(Rnew,Secret,r3);
+		claim(Rnew,Niagree);
+		claim(Rnew,Nisynch);
+		claim(Rnew,Alive);
+		claim(Rnew,Weakagree);
+	       }
+
+	role T{
+		fresh r2;
+		fresh r4;
+		secret ids;
+		secret krcurrent;
+		secret r1;
+		secret r2;
+		secret r3;
+		secret r4;
+
+		recv_1(Rcurrent,T,OTRequest);
+		send_2(T,Rcurrent,ids);
+		recv_3(Rcurrent,T,con(A,B));
+		send_4(T,Rcurrent,con(C,D));
+		recv_5(Rcurrent,T,con(E,F));
+		recv_6(Rnew,T,con(M1,M2));
+		send_7(T,Rnew,con(M3,M4));
+		recv_8(Rnew,T,M5);
+
+		claim(T,Secret,krcurrent);
+		claim(T,Secret,r2);
+		claim(T,Secret,r4);
+		claim(T,Niagree);
+		claim(T,Nisynch);
+		claim(T,Alive);
+		claim(T,Weakagree);
+	}
+}
