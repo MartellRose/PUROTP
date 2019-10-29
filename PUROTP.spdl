@@ -1,91 +1,81 @@
-/* 
- * RFID ownership transfer protocol---PUROTP
- */
 const xor:Function;
 const con:Function;
 const rot:Function;
 const puf:Function;
 usertype String;
 const OTRequest: String;
-
+secret id;
 secret ids;
 secret krnew;
 secret krcurrent;
 secret r1;
+secret p1;
 secret r2;
-secret r3;
-secret r4;
+secret p2;
 
-macro r2=puf(xor(krcurrent,r1));
-macro r4=puf(xor(krnew,r3));
+macro p1=puf(xor(puf(xor(krcurrent,id)),r1));
+macro p2=puf(xor(puf(xor(krnew,r2)),r2));
 macro A=xor(rot(r1,ids),krcurrent);
 macro B=xor(rot(krcurrent,r1),ids);
-macro C=xor(rot(r2,ids),krcurrent);
-macro D=xor(rot(krcurrent,r2),r1);
-macro E=xor(rot(r3,ids),krcurrent);
-macro F=xor(rot(krcurrent,r3),r2);
-macro M1=xor(krnew,rot(ids,r3));
-macro M2=xor(rot(krnew,r3),ids);
-macro M3=xor(rot(r3,krnew),ids);
-macro M4=xor(rot(krcurrent,r4),r3);
-macro M5=rot(krnew,xor(r4,r3));
+macro C=xor(rot(p1,ids),krcurrent);
+macro D=xor(rot(krcurrent,p1),r1);
+macro E=xor(rot(r2,ids),krcurrent);
+macro F=xor(rot(krcurrent,r2),p1);
+macro M1=xor(krnew,rot(ids,r2));
+macro M2=xor(rot(krnew,r2),ids);
+macro M3=xor(rot(r2,krnew),ids);
+macro M4=xor(rot(krcurrent,p2),r2);
+macro M5=rot(krnew,xor(p2,r2));
 
 protocol purotp(Rcurrent,Rnew,T){
 	role Rcurrent{
 		secret ids;
 		secret krcurrent;
 		secret r1;
+		secret p1;
 		secret r2;
-		secret r3;
 		fresh r1;
-		fresh r3;
-
+		fresh r2;
 		send_1(Rcurrent,T,OTRequest);
 		recv_2(T,Rcurrent,ids);
 		send_3(Rcurrent,T,con(A,B));
 		recv_4(T,Rcurrent,con(C,D));
 		send_5(Rcurrent,T,con(E,F));
-
 		claim(Rcurrent,Secret,krcurrent);
 		claim(Rcurrent,Secret,r1);
-		claim(Rcurrent,Secret,r3);
+		claim(Rcurrent,Secret,r2);
 		claim(Rcurrent,Niagree);
 		claim(Rcurrent,Nisynch);
 		claim(Rcurrent,Alive);
 		claim(Rcurrent,Weakagree);
 	       }
-
 	role Rnew{
 		secret ids;
 		secret krcurrent;
 		secret r1;
+		secret p1;
 		secret r2;
-		secret r3;
-		secret r4;
-		fresh r3;
-
+		secret p2;
+		fresh r2;
 		send_6(Rnew,T,con(M1,M2));
 		recv_7(T,Rnew,con(M3,M4));
 		send_8(Rnew,T,M5);
-
 		claim(Rnew,Secret,krnew);
-		claim(Rnew,Secret,r3);
+		claim(Rnew,Secret,r2);
 		claim(Rnew,Niagree);
 		claim(Rnew,Nisynch);
 		claim(Rnew,Alive);
 		claim(Rnew,Weakagree);
 	       }
-
 	role T{
-		fresh r2;
-		fresh r4;
+		fresh p1;
+		fresh p2;
 		secret ids;
 		secret krcurrent;
 		secret r1;
+		secret p1;
 		secret r2;
-		secret r3;
-		secret r4;
-
+		secret p2;
 		recv_1(Rcurrent,T,OTRequest);
 		send_2(T,Rcurrent,ids);
 		recv_3(Rcurrent,T,con(A,B));
@@ -94,10 +84,9 @@ protocol purotp(Rcurrent,Rnew,T){
 		recv_6(Rnew,T,con(M1,M2));
 		send_7(T,Rnew,con(M3,M4));
 		recv_8(Rnew,T,M5);
-
 		claim(T,Secret,krcurrent);
-		claim(T,Secret,r2);
-		claim(T,Secret,r4);
+		claim(T,Secret,p1);
+		claim(T,Secret,p2);
 		claim(T,Niagree);
 		claim(T,Nisynch);
 		claim(T,Alive);
